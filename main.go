@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-
-	server "todo-list/lib/server"
+	"todo-list/lib/server"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,7 +25,6 @@ func main() {
 	var DB_FILE = os.Getenv("TODO_DBFILE")
 
 	if !isAlreadyExist(DB_FILE) {
-		os.Create(DB_FILE)
 		var err = initializeDB(DB_FILE)
 
 		if err != nil {
@@ -37,7 +35,10 @@ func main() {
 	var mux = http.DefaultServeMux
 
 	mux.Handle("/", http.FileServer(http.Dir(webDir)))
-	mux.Handle("/api/nextdate", server.ApiHandlers["/api/nextdate"])
+
+	for rout, handler := range server.ApiHandlers {
+		mux.Handle(rout, handler)
+	}
 
 	fmt.Println("Start listening: http://localhost:" + PORT)
 
@@ -57,6 +58,8 @@ func isAlreadyExist(file string) bool {
 }
 
 func initializeDB(name string) error {
+	os.Create(name)
+
 	var err error
 	var db *sqlx.DB
 

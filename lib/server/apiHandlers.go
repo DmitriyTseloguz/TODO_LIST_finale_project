@@ -5,7 +5,7 @@ import (
 	"time"
 
 	planner "todo-list/lib"
-	"todo-list/lib/model"
+	"todo-list/lib/extensions"
 )
 
 var ApiHandlers = map[string]http.HandlerFunc{
@@ -20,7 +20,8 @@ var ApiHandlers = map[string]http.HandlerFunc{
 		var repeatParameter = request.URL.Query().Get("repeat")
 
 		var baseOnDate, nowParseError = time.Parse("20060102", nowParameter)
-		var _, dateParseError = time.Parse("20060102", dateParameter)
+		var date, dateParseError = time.Parse("20060102", dateParameter)
+		var repeater = extensions.RepeaterRule(repeatParameter)
 
 		if dateParseError != nil {
 			response.Write([]byte("Wrong date"))
@@ -32,9 +33,15 @@ var ApiHandlers = map[string]http.HandlerFunc{
 			return
 		}
 
-		var task = model.NewTask(0, "", dateParameter, "", repeatParameter)
+		var validationError = repeater.Validate()
 
-		var rescheduler, err = planner.DefineRescheduler(task)
+		if validationError != nil {
+			response.Write([]byte(validationError.Error()))
+		}
+
+		var event = planner.NewEvent(date, repeater)
+
+		var rescheduler, err = planner.DefineRescheduler(event)
 
 		if err != nil {
 			response.Write([]byte(err.Error()))
@@ -46,9 +53,9 @@ var ApiHandlers = map[string]http.HandlerFunc{
 			rescheduler.SetBaseOnDate(baseOnDate)
 		}
 
-		rescheduler.Reschedule(task)
+		rescheduler.Reschedule(event)
 
-		var nextTime = task.GetTime()
+		var nextTime = event.GetTime()
 
 		response.Write([]byte(nextTime.Format("20060102")))
 	},

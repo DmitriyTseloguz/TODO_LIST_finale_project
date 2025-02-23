@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"todo-list/lib/extensions"
 )
 
 type Task struct {
@@ -15,6 +17,7 @@ type Task struct {
 func NewTask(id int, title, date, comment, repeat string) *Task {
 	return &Task{id, title, date, comment, repeat}
 }
+
 func (task *Task) SetTime(t time.Time) {
 	task.date = t.Format("20060102")
 }
@@ -25,6 +28,6 @@ func (task Task) GetTime() time.Time {
 	return taskEventTime
 }
 
-func (task Task) GetRepeater() string {
-	return task.repeat
+func (task Task) GetRepeater() extensions.RepeaterRule {
+	return extensions.RepeaterRule(task.repeat)
 }
