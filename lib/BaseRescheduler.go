@@ -27,9 +27,9 @@ var ruleTypeRepeaterConditions = map[string]RepeaterConditions{
 	"y": yearRepeaterConditions,
 }
 
-func DefineRescheduler(event interfaces.IReschedulable) (IRescheduler, error) {
+func DefineRescheduler(event interfaces.IReschedulable) (interfaces.IRescheduler, error) {
 	var repeater = event.GetRepeater()
-	var rescheduler IRescheduler
+	var rescheduler interfaces.IRescheduler
 
 	var repeaterData = strings.Split(repeater, " ")
 
@@ -67,14 +67,6 @@ func DefineRescheduler(event interfaces.IReschedulable) (IRescheduler, error) {
 	}
 
 	return rescheduler, nil
-}
-
-type IRescheduler interface {
-	Reschedule(interfaces.IReschedulable) error
-	SetBaseOnDate(time.Time)
-	GetBaseOnDate() time.Time
-	GetType() string
-	GetOptions() string
 }
 
 type BaseRescheduler struct {

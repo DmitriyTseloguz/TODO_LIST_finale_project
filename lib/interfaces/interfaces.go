@@ -7,3 +7,11 @@ type IReschedulable interface {
 	GetTime() time.Time
 	GetRepeater() string
 }
+
+type IRescheduler interface {
+	Reschedule(IReschedulable) error
+	SetBaseOnDate(time.Time)
+	GetBaseOnDate() time.Time
+	GetType() string
+	GetOptions() string
+}
