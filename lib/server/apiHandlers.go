@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"todo-list/lib/database"
@@ -18,6 +19,8 @@ var ApiHandlers = map[string]http.HandlerFunc{
 	"/api/nextdate": nextDate,
 	"/api/task": func(response http.ResponseWriter, request *http.Request) {
 		switch request.Method {
+		case http.MethodGet:
+			getTask(response, request)
 		case http.MethodPost:
 			createTask(response, request)
 		default:
@@ -81,6 +84,37 @@ func createTask(response http.ResponseWriter, request *http.Request) {
 
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]int{"id": id})
+}
+
+func getTask(response http.ResponseWriter, request *http.Request) {
+	var id = request.URL.Query().Get("id")
+
+	if id == "" {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Missing 'id' parameter"})
+		return
+	}
+
+	taskID, err := strconv.Atoi(id)
+
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' parameter"})
+		return
+	}
+
+	db := database.GetDB()
+	task, err := db.GetTask(taskID)
+
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to get task: %v", err)})
+		return
+	}
+
+	// Возвращаем задачу в формате JSON
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(task)
 }
 
 func getTasks(response http.ResponseWriter, request *http.Request) {
