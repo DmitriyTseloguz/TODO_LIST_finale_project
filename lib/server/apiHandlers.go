@@ -23,6 +23,8 @@ var ApiHandlers = map[string]http.HandlerFunc{
 			getTask(response, request)
 		case http.MethodPost:
 			createTask(response, request)
+		case http.MethodPut:
+			editTask(response, request)
 		default:
 			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -146,6 +148,67 @@ func getTasks(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	response.Write(jsonTasks)
+}
+
+func editTask(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	if request.Body == nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Request body is empty"})
+		return
+	}
+
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Failed to read request body"})
+		return
+	}
+	defer request.Body.Close()
+
+	if len(body) == 0 {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Request body is empty"})
+		return
+	}
+
+	if !json.Valid(body) {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid JSON"})
+		return
+	}
+
+	task, err := utils.DecodeTaskFromJSON(body)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	if task.ID == "" {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Missing 'id' field"})
+		return
+	}
+
+	taskID, err := strconv.Atoi(task.ID)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' field"})
+		return
+	}
+
+	db := database.GetDB()
+	err = db.UpdateTask(taskID, task)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to update task: %v", err)})
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]interface{}{})
 }
 
 func nextDate(response http.ResponseWriter, request *http.Request) {
