@@ -152,3 +152,17 @@ func (db *DB) UpdateTask(taskID int, task *model.Task) error {
 
 	return nil
 }
+
+func (db *DB) DeleteTask(taskID int) error {
+	query := `
+		DELETE FROM scheduler
+		WHERE id = ?
+	`
+
+	_, err := db.conn.Exec(query, taskID)
+	if err != nil {
+		return fmt.Errorf("failed to delete task: %w", err)
+	}
+
+	return nil
+}

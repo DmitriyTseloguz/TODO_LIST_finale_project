@@ -37,6 +37,14 @@ var ApiHandlers = map[string]http.HandlerFunc{
 			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	},
+	"/api/task/done": func(response http.ResponseWriter, request *http.Request) {
+		switch request.Method {
+		case http.MethodPost:
+			completeTask(response, request)
+		default:
+			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	},
 }
 
 func createTask(response http.ResponseWriter, request *http.Request) {
@@ -256,4 +264,60 @@ func nextDate(response http.ResponseWriter, request *http.Request) {
 	}
 
 	response.Write([]byte(nextDate.Format("20060102")))
+}
+
+func completeTask(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	taskID := request.URL.Query().Get("id")
+	if taskID == "" {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Missing 'id' parameter"})
+		return
+	}
+
+	id, err := strconv.Atoi(taskID)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' parameter"})
+		return
+	}
+
+	db := database.GetDB()
+	task, err := db.GetTask(id)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to get task: %v", err)})
+		return
+	}
+
+	if task.Repeat != "" {
+		event := planner.NewEvent(task.GetTime(), task.GetRepeater())
+
+		nextDate, err := event.GetNextDate(time.Now())
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to calculate next date: %v", err)})
+			return
+		}
+
+		task.SetTime(nextDate)
+
+		err = db.UpdateTask(id, &task)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to update task: %v", err)})
+			return
+		}
+	} else {
+		err = db.DeleteTask(id)
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to delete task: %v", err)})
+			return
+		}
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]interface{}{})
 }
