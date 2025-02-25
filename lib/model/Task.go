@@ -7,14 +7,14 @@ import (
 )
 
 type Task struct {
-	ID      int                   `json:"id"`
+	ID      string                `json:"id"`
 	Title   string                `json:"title"`
 	Date    extensions.ExtendTime `json:"date"`
 	Comment string                `json:"comment"`
 	Repeat  string                `json:"repeat"`
 }
 
-func NewTask(id int, title string, date time.Time, comment, repeat string) *Task {
+func NewTask(id string, title string, date time.Time, comment, repeat string) *Task {
 	return &Task{
 		ID:      id,
 		Title:   title,

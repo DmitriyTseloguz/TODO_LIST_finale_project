@@ -56,6 +56,41 @@ func (db *DB) Initialize() error {
 	return nil
 }
 
+func (db *DB) GetTask(taskID int) (model.Task, error) {
+	query := `
+		SELECT id, date, title, comment, repeat
+		FROM scheduler
+		WHERE id = ?
+	`
+
+	var task model.Task
+
+	err := db.conn.QueryRowx(query, taskID).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+
+	if err != nil {
+		return model.Task{}, fmt.Errorf("failed to get task: %w", err)
+	}
+
+	return task, nil
+}
+
+func (db *DB) GetAllTasks() ([]model.Task, error) {
+	query := `
+		SELECT id, date, title, comment, repeat
+		FROM scheduler
+	`
+
+	var tasks []model.Task = make([]model.Task, 0)
+
+	err := db.conn.Select(&tasks, query)
+
+	if err != nil {
+		return tasks, fmt.Errorf("failed to get tasks: %w", err)
+	}
+
+	return tasks, nil
+}
+
 func (db *DB) CreateTask(task *model.Task) (int, error) {
 	query := `
         INSERT INTO scheduler (date, title, comment, repeat)
@@ -63,7 +98,7 @@ func (db *DB) CreateTask(task *model.Task) (int, error) {
     `
 
 	result, err := db.conn.NamedExec(query, map[string]any{
-		"date":    task.GetTime().Format("20060102"),
+		"date":    task.Date,
 		"title":   task.Title,
 		"comment": task.Comment,
 		"repeat":  task.Repeat,

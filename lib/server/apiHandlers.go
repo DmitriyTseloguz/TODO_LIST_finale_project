@@ -2,12 +2,14 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
 
 	"todo-list/lib/database"
 	"todo-list/lib/extensions"
+	"todo-list/lib/model"
 	"todo-list/lib/planner"
 	"todo-list/lib/utils"
 )
@@ -18,6 +20,14 @@ var ApiHandlers = map[string]http.HandlerFunc{
 		switch request.Method {
 		case http.MethodPost:
 			createTask(response, request)
+		default:
+			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	},
+	"/api/tasks": func(response http.ResponseWriter, request *http.Request) {
+		switch request.Method {
+		case http.MethodGet:
+			getTasks(response, request)
 		default:
 			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -71,6 +81,37 @@ func createTask(response http.ResponseWriter, request *http.Request) {
 
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]int{"id": id})
+}
+
+func getTasks(response http.ResponseWriter, request *http.Request) {
+	var db = database.GetDB()
+
+	var tasks, err = db.GetAllTasks()
+
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Failed to get tasks"})
+		return
+	}
+
+	var responseTasks = struct {
+		Tasks []model.Task `json:"tasks"`
+	}{
+		Tasks: tasks,
+	}
+
+	var jsonTasks, encodeError = json.Marshal(responseTasks)
+
+	fmt.Println("JSON: " + string(jsonTasks))
+	if encodeError != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": encodeError.Error()})
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	response.Write(jsonTasks)
 }
 
 func nextDate(response http.ResponseWriter, request *http.Request) {
