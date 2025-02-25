@@ -19,7 +19,7 @@ var yearRepeaterConditions = RepeaterConditions{
 	{IsLengthEqualWith(1), errors.New("repeat rule \"Y\" should have one parameters")},
 }
 
-var otherRepeaterConditions = RepeaterConditions{
+var commonRepeaterConditions = RepeaterConditions{
 	{IsOneOf(availableRepeaters), errors.New("repeat rule is not supported")},
 }
 

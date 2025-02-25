@@ -25,3 +25,17 @@ func (event Event) GetTime() time.Time {
 func (event Event) GetRepeater() extensions.RepeaterRule {
 	return event.repeater
 }
+
+func (event Event) GetNextDate(baseOnDate time.Time) (time.Time, error) {
+	var rescheduler, err = DefineRescheduler(&event)
+
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	rescheduler.SetBaseOnDate(baseOnDate)
+
+	rescheduler.Reschedule(&event)
+
+	return event.GetTime(), nil
+}

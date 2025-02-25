@@ -7,27 +7,31 @@ import (
 )
 
 type Task struct {
-	id      int
-	title   string
-	date    string
-	comment string
-	repeat  string
+	ID      int                   `json:"id"`
+	Title   string                `json:"title"`
+	Date    extensions.ExtendTime `json:"date"`
+	Comment string                `json:"comment"`
+	Repeat  string                `json:"repeat"`
 }
 
-func NewTask(id int, title, date, comment, repeat string) *Task {
-	return &Task{id, title, date, comment, repeat}
+func NewTask(id int, title string, date time.Time, comment, repeat string) *Task {
+	return &Task{
+		ID:      id,
+		Title:   title,
+		Date:    extensions.ExtendTime(date),
+		Comment: comment,
+		Repeat:  repeat,
+	}
 }
 
 func (task *Task) SetTime(t time.Time) {
-	task.date = t.Format("20060102")
+	task.Date = extensions.ExtendTime(t)
 }
 
 func (task Task) GetTime() time.Time {
-	var taskEventTime, _ = time.Parse("20060102", task.date)
-
-	return taskEventTime
+	return time.Time(task.Date)
 }
 
 func (task Task) GetRepeater() extensions.RepeaterRule {
-	return extensions.RepeaterRule(task.repeat)
+	return extensions.RepeaterRule(task.Repeat)
 }

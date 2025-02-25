@@ -8,7 +8,7 @@ import (
 type RepeaterRule string
 
 func (repeater RepeaterRule) Validate() error {
-	var repeaterData = strings.Split(string(repeater), " ")
+	var repeaterData = repeater.Separate()
 
 	if len(repeater) == 0 {
 		return errors.New("repeat rule can't be empty")
@@ -19,7 +19,7 @@ func (repeater RepeaterRule) Validate() error {
 	var validator = ruleTypeRepeaterConditions[repeaterType]
 
 	if validator == nil {
-		validator = otherRepeaterConditions
+		validator = commonRepeaterConditions
 	}
 
 	return validator.GetError(repeater)

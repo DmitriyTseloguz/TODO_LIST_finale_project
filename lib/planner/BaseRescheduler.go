@@ -1,6 +1,7 @@
 package planner
 
 import (
+	"errors"
 	"time"
 	"todo-list/lib/interfaces"
 )
@@ -20,6 +21,8 @@ func DefineRescheduler(event interfaces.IReschedulable) (interfaces.IRescheduler
 		rescheduler = &DayRescheduler{base}
 	case "y":
 		rescheduler = &YearRescheduler{base}
+	default:
+		return rescheduler, errors.New("not supported repeater")
 	}
 
 	return rescheduler, nil
