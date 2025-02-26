@@ -25,6 +25,8 @@ var ApiHandlers = map[string]http.HandlerFunc{
 			createTask(response, request)
 		case http.MethodPut:
 			editTask(response, request)
+		case http.MethodDelete:
+			deleteTask(response, request)
 		default:
 			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -146,7 +148,6 @@ func getTasks(response http.ResponseWriter, request *http.Request) {
 
 	var jsonTasks, encodeError = json.Marshal(responseTasks)
 
-	fmt.Println("JSON: " + string(jsonTasks))
 	if encodeError != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(response).Encode(map[string]string{"error": encodeError.Error()})
@@ -216,7 +217,36 @@ func editTask(response http.ResponseWriter, request *http.Request) {
 	}
 
 	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(map[string]interface{}{})
+	json.NewEncoder(response).Encode(map[string]any{})
+}
+
+func deleteTask(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	taskID := request.URL.Query().Get("id")
+	if taskID == "" {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Missing 'id' parameter"})
+		return
+	}
+
+	id, err := strconv.Atoi(taskID)
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' parameter"})
+		return
+	}
+
+	db := database.GetDB()
+	err = db.DeleteTask(id)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to delete task: %v", err)})
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]any{})
 }
 
 func nextDate(response http.ResponseWriter, request *http.Request) {
