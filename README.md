@@ -44,6 +44,7 @@ go mod download
 3. **Создать файл .env:**
 
 TODO_PORT=7540
+
 TODO_DBFILE=scheduler.db
 
 5. **Запустить сервер:**
