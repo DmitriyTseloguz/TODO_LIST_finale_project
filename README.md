@@ -30,23 +30,26 @@
 ### Установка и запуск
 
 1. **Клонировать репозиторий:**
-bash
+
 git clone https://github.com/yourusername/todo-list.git
+
 cd todo-list
 
 2. **Установить зависимости:**
 
 go mod download
+
 Создать файл .env:
 
 3. **Создать файл .env:**
-env
+
 TODO_PORT=7540
 TODO_DBFILE=scheduler.db
 
-4. **Запустить сервер:**
+5. **Запустить сервер:**
 
 go run main.go
+
 Сервер будет доступен по адресу: http://localhost:7540
 
 ### Запуск тестов
@@ -95,10 +98,3 @@ go test ./tests
 Получение списка задач:
 
 - curl http://localhost:7540/api/tasks
-
-### Используемые технологии
-
-- Go 1.21
-- SQLite3
-- GitHub.com/jmoiron/sqlx
-- Готовый фронтенд (HTML/CSS/JS)
