@@ -14,16 +14,6 @@ type Task struct {
 	Repeat  string                `json:"repeat"`
 }
 
-func NewTask(id string, title string, date time.Time, comment, repeat string) *Task {
-	return &Task{
-		ID:      id,
-		Title:   title,
-		Date:    extensions.ExtendTime(date),
-		Comment: comment,
-		Repeat:  repeat,
-	}
-}
-
 func (task *Task) SetTime(t time.Time) {
 	task.Date = extensions.ExtendTime(t)
 }
