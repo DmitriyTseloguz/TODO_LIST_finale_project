@@ -77,8 +77,6 @@ func createTask(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	defer request.Body.Close()
-
 	if len(body) == 0 {
 		response.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(response).Encode(map[string]string{"error": "Request body is empty"})
@@ -179,7 +177,6 @@ func editTask(response http.ResponseWriter, request *http.Request) {
 		json.NewEncoder(response).Encode(map[string]string{"error": "Failed to read request body"})
 		return
 	}
-	defer request.Body.Close()
 
 	if len(body) == 0 {
 		response.WriteHeader(http.StatusBadRequest)
