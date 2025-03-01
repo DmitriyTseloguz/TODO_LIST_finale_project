@@ -15,7 +15,7 @@ import (
 	"todo-list/lib/utils"
 )
 
-var ApiHandlers = map[string]http.HandlerFunc{
+var apiHandlers = map[string]http.HandlerFunc{
 	"/api/nextdate": nextDate,
 	"/api/task": func(response http.ResponseWriter, request *http.Request) {
 		switch request.Method {
@@ -47,6 +47,18 @@ var ApiHandlers = map[string]http.HandlerFunc{
 			http.Error(response, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	},
+}
+
+func New(webDir string) *http.ServeMux {
+	var mux = http.DefaultServeMux
+
+	mux.Handle("/", http.FileServer(http.Dir(webDir)))
+
+	for rout, handler := range apiHandlers {
+		mux.Handle(rout, handler)
+	}
+
+	return mux
 }
 
 func createTask(response http.ResponseWriter, request *http.Request) {

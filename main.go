@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -24,10 +23,10 @@ func main() {
 	var PORT = os.Getenv("TODO_PORT")
 	var DB_FILE = os.Getenv("TODO_DBFILE")
 
-	var db, databaseError = database.NewDB(DB_FILE)
+	db, err := database.NewDB(DB_FILE)
 
-	if databaseError != nil {
-		log.Fatalf("Failed to load database: %v", databaseError)
+	if err != nil {
+		log.Fatalf("Failed to load database: %v", err)
 	}
 
 	defer db.Close()
@@ -36,19 +35,11 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	var mux = http.DefaultServeMux
+	todoServer := server.New(webDir)
 
-	mux.Handle("/", http.FileServer(http.Dir(webDir)))
+	log.Println("Start listening: http://localhost:" + PORT)
 
-	for rout, handler := range server.ApiHandlers {
-		mux.Handle(rout, handler)
-	}
-
-	fmt.Println("Start listening: http://localhost:" + PORT)
-
-	var serverError = http.ListenAndServe(":"+PORT, mux)
-
-	if serverError != nil {
-		log.Fatal(serverError)
+	if err := http.ListenAndServe(":"+PORT, todoServer); err != nil {
+		log.Fatal(err)
 	}
 }
