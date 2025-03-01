@@ -97,8 +97,7 @@ func createTask(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	db := database.GetDB()
-	id, err := db.CreateTask(task)
+	id, err := database.GetDB().CreateTask(task)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(response).Encode(map[string]string{"error": "Failed to create task"})
