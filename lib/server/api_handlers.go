@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"todo-list/lib/constants"
 	"todo-list/lib/database"
 	"todo-list/lib/extensions"
 	"todo-list/lib/model"
@@ -119,16 +120,8 @@ func getTask(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	taskID, err := strconv.Atoi(id)
-
-	if err != nil {
-		response.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' parameter"})
-		return
-	}
-
 	db := database.GetDB()
-	task, err := db.GetTask(taskID)
+	task, err := db.GetTask(id)
 
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -213,15 +206,8 @@ func editTask(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	taskID, err := strconv.Atoi(task.ID)
-	if err != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' field"})
-		return
-	}
-
 	db := database.GetDB()
-	err = db.UpdateTask(taskID, task)
+	err = db.UpdateTask(task)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to update task: %v", err)})
@@ -242,7 +228,7 @@ func deleteTask(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(taskID)
+	_, err := strconv.Atoi(taskID)
 	if err != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' parameter"})
@@ -250,7 +236,8 @@ func deleteTask(response http.ResponseWriter, request *http.Request) {
 	}
 
 	db := database.GetDB()
-	err = db.DeleteTask(id)
+	err = db.DeleteTask(taskID)
+
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to delete task: %v", err)})
@@ -271,8 +258,8 @@ func nextDate(response http.ResponseWriter, request *http.Request) {
 	var dateParameter = request.URL.Query().Get("date")
 	var repeatParameter = request.URL.Query().Get("repeat")
 
-	var baseOnDate, nowParseError = time.Parse("20060102", nowParameter)
-	var date, dateParseError = time.Parse("20060102", dateParameter)
+	var baseOnDate, nowParseError = time.Parse(constants.DBDateFormat, nowParameter)
+	var date, dateParseError = time.Parse(constants.DBDateFormat, dateParameter)
 	var repeater = extensions.RepeaterRule(repeatParameter)
 
 	if dateParseError != nil {
@@ -305,7 +292,7 @@ func nextDate(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	response.Write([]byte(nextDate.Format("20060102")))
+	response.Write([]byte(nextDate.Format(constants.DBDateFormat)))
 }
 
 func completeTask(response http.ResponseWriter, request *http.Request) {
@@ -318,15 +305,8 @@ func completeTask(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(taskID)
-	if err != nil {
-		response.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(response).Encode(map[string]string{"error": "Invalid 'id' parameter"})
-		return
-	}
-
 	db := database.GetDB()
-	task, err := db.GetTask(id)
+	task, err := db.GetTask(taskID)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to get task: %v", err)})
@@ -345,14 +325,14 @@ func completeTask(response http.ResponseWriter, request *http.Request) {
 
 		task.SetTime(nextDate)
 
-		err = db.UpdateTask(id, &task)
+		err = db.UpdateTask(&task)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to update task: %v", err)})
 			return
 		}
 	} else {
-		err = db.DeleteTask(id)
+		err = db.DeleteTask(taskID)
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(response).Encode(map[string]string{"error": fmt.Sprintf("Failed to delete task: %v", err)})

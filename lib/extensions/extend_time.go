@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"todo-list/lib/constants"
 )
 
 type ExtendTime time.Time
@@ -18,7 +20,7 @@ func (et *ExtendTime) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	t, err := time.Parse("20060102", str)
+	t, err := time.Parse(constants.DBDateFormat, str)
 
 	if err != nil {
 		return err
@@ -30,10 +32,10 @@ func (et *ExtendTime) UnmarshalJSON(data []byte) error {
 }
 
 func (et ExtendTime) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Time(et).Format("20060102"))
+	return json.Marshal(time.Time(et).Format(constants.DBDateFormat))
 }
 
-func (et *ExtendTime) Scan(value interface{}) error {
+func (et *ExtendTime) Scan(value any) error {
 	if value == nil {
 		*et = ExtendTime(time.Now())
 		return nil
@@ -44,7 +46,7 @@ func (et *ExtendTime) Scan(value interface{}) error {
 		return fmt.Errorf("expected string, got %T", value)
 	}
 
-	t, err := time.Parse("20060102", dateStr)
+	t, err := time.Parse(constants.DBDateFormat, dateStr)
 	if err != nil {
 		return fmt.Errorf("failed to parse date: %w", err)
 	}
@@ -55,9 +57,9 @@ func (et *ExtendTime) Scan(value interface{}) error {
 }
 
 func (et ExtendTime) Value() (driver.Value, error) {
-	return time.Time(et).Format("20060102"), nil
+	return time.Time(et).Format(constants.DBDateFormat), nil
 }
 
 func (et ExtendTime) String() string {
-	return time.Time(et).Format("2006-01-02")
+	return time.Time(et).Format(constants.DisplayDateFormat)
 }

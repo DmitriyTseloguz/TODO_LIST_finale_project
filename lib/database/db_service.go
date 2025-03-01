@@ -56,7 +56,7 @@ func (db *DB) Initialize() error {
 	return nil
 }
 
-func (db *DB) GetTask(taskID int) (model.Task, error) {
+func (db *DB) GetTask(taskID string) (model.Task, error) {
 	query := `
 		SELECT id, date, title, comment, repeat
 		FROM scheduler
@@ -116,8 +116,8 @@ func (db *DB) CreateTask(task *model.Task) (int, error) {
 	return int(id), nil
 }
 
-func (db *DB) UpdateTask(taskID int, task *model.Task) error {
-	_, err := db.GetTask(taskID)
+func (db *DB) UpdateTask(task *model.Task) error {
+	_, err := db.GetTask(task.ID)
 	if err != nil {
 		return fmt.Errorf("task not found")
 	}
@@ -129,7 +129,7 @@ func (db *DB) UpdateTask(taskID int, task *model.Task) error {
 	`
 
 	data := map[string]interface{}{
-		"id":      taskID,
+		"id":      task.ID,
 		"date":    task.Date,
 		"title":   task.Title,
 		"comment": task.Comment,
@@ -153,7 +153,7 @@ func (db *DB) UpdateTask(taskID int, task *model.Task) error {
 	return nil
 }
 
-func (db *DB) DeleteTask(taskID int) error {
+func (db *DB) DeleteTask(taskID string) error {
 	query := `
 		DELETE FROM scheduler
 		WHERE id = ?
